@@ -7,6 +7,51 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## How to run this project
+
+**Requirements:** PHP 8.2+, Composer, MySQL (or MariaDB).
+
+1. **Clone and enter the project**
+   ```bash
+   git clone <your-repo-url> advancedAssignment
+   cd advancedAssignment
+   ```
+
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Environment file**
+   - Copy `.env.example` to `.env` if you don’t have `.env` yet:
+     ```bash
+     copy .env.example .env
+     ```
+   - Edit `.env` and set your database: `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`.
+   - Generate app key:
+     ```bash
+     php artisan key:generate
+     ```
+
+4. **Database (optional)**
+   - Create the database in MySQL (e.g. `testing`).
+   - Run migrations:
+     ```bash
+     php artisan migrate
+     ```
+
+5. **Start the dev server**
+   ```bash
+   php artisan serve
+   ```
+
+6. **Open in browser**
+   - Home: **http://127.0.0.1:8000**
+   - DB test (table data as JSON): **http://127.0.0.1:8000/db-test**  
+     Optional: `?table=users&limit=20`
+
+---
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

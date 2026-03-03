@@ -1,11 +1,24 @@
 <?php
 
+use App\Http\Controllers\StoreController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
-Route::get('/', function () {
-    return view('welcome');
+// E-commerce store (main site)
+Route::get('/', [StoreController::class, 'home']);
+Route::get('/store', [StoreController::class, 'home']);
+Route::get('/store/product/{id}', [StoreController::class, 'product']);
+Route::get('/store/cart', [StoreController::class, 'cart']);
+
+// Legacy: users table view & db-test
+Route::get('/users', function () {
+    try {
+        $users = DB::table('users')->orderBy('id')->get();
+        return view('users', ['users' => $users]);
+    } catch (\Throwable $e) {
+        return view('users', ['users' => collect(), 'error' => $e->getMessage()]);
+    }
 });
 
 Route::get('/db-test', function (Request $request) {
