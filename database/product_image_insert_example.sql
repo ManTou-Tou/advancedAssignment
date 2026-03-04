@@ -1,7 +1,4 @@
--- Store the path relative to the "public" folder (no leading slash).
--- Your image will be served at: http://yoursite.com/Image/product/filename.jpg
 
--- Example: single product
 INSERT INTO products (name, brand, category, price, rating, image) VALUES
 ('iPhone 15', 'Apple', 'phones', 799, 4.8, 'Image/product/Iphone15.jpg');
 
