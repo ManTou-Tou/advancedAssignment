@@ -9,7 +9,14 @@ use Illuminate\Support\Facades\DB;
 Route::get('/', [StoreController::class, 'home']);
 Route::get('/store', [StoreController::class, 'home']);
 Route::get('/store/product/{id}', [StoreController::class, 'product']);
-Route::get('/store/cart', [StoreController::class, 'cart']);
+Route::get('/store/cart', [StoreController::class, 'cart'])->name('store.cart');
+Route::post('/store/cart/add', [StoreController::class, 'addToCart'])->name('store.cart.add');
+Route::post('/store/cart/remove', [StoreController::class, 'removeFromCart'])->name('store.cart.remove');
+Route::post('/store/cart/update', [StoreController::class, 'updateCartQuantity'])->name('store.cart.update');
+Route::get('/store/checkout', [StoreController::class, 'checkout'])->name('store.checkout');
+Route::post('/store/order/place', [StoreController::class, 'placeOrder'])->name('store.order.place');
+Route::get('/store/order/{id}/confirmation', [StoreController::class, 'orderConfirmation'])->name('store.order.confirmation');
+Route::get('/store/order/{id}/bill.pdf', [StoreController::class, 'billPdf'])->name('store.order.bill-pdf');
 
 // Legacy: users table view & db-test
 Route::get('/users', function () {

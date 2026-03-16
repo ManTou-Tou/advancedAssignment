@@ -93,7 +93,12 @@
                 <div class="product-rating">★★★★☆ {{ $p['rating'] }}</div>
                 <div class="product-price">${{ number_format($p['price'], 0) }}</div>
                 <div class="product-actions">
-                    <button type="button" class="btn-cart">Add to Cart</button>
+                    <form action="{{ route('store.cart.add') }}" method="post" style="flex:1;display:flex;">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $p['id'] }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn-cart">Add to Cart</button>
+                    </form>
                     <button type="button" class="wishlist-btn" aria-label="Wishlist">♡</button>
                 </div>
             </div>
@@ -142,7 +147,12 @@
                 <div class="product-rating">★★★★☆ {{ $p['rating'] }}</div>
                 <div class="product-price">${{ number_format($p['price'], 0) }}</div>
                 <div class="product-actions">
-                    <button type="button" class="btn-cart">Add to Cart</button>
+                    <form action="{{ route('store.cart.add') }}" method="post" style="flex:1;display:flex;">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $p['id'] }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn-cart">Add to Cart</button>
+                    </form>
                     <button type="button" class="wishlist-btn" aria-label="Wishlist">♡</button>
                 </div>
             </div>

@@ -39,11 +39,16 @@
 
         <div class="qty">
             <label>Quantity</label>
-            <input type="number" id="qty" value="1" min="1" max="99">
+            <input type="number" id="qty" name="quantity" value="1" min="1" max="99">
         </div>
 
-        <button type="button" class="btn-add-cart">Add to Cart</button>
-        <button type="button" class="btn-buy-now">Buy Now</button>
+        <form action="{{ route('store.cart.add') }}" method="post" id="add-to-cart-form">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+            <input type="hidden" name="quantity" id="qty-hidden" value="1">
+            <button type="submit" class="btn-add-cart">Add to Cart</button>
+        </form>
+        <a href="{{ url('/store/cart') }}" class="btn-buy-now" style="display:inline-block;text-align:center;box-sizing:border-box;">Buy Now</a>
 
         <div class="product-tabs">
             <div class="tab-head">
@@ -69,7 +74,12 @@
         <strong>{{ $product['name'] }}</strong>
         <span style="color: var(--accent); font-weight: 600;">${{ number_format($product['price'], 0) }}</span>
     </div>
-    <button type="button" class="btn-add-cart" style="max-width: 200px;">Add to Cart</button>
+    <form action="{{ route('store.cart.add') }}" method="post" style="display:flex;">
+        @csrf
+        <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+        <input type="hidden" name="quantity" id="qty-sticky" value="1">
+        <button type="submit" class="btn-add-cart" style="max-width: 200px;">Add to Cart</button>
+    </form>
 </div>
 
 @push('scripts')
@@ -104,6 +114,16 @@
         var sticky = document.getElementById('sticky-cart');
         if (sticky) sticky.classList.toggle('visible', window.scrollY > 500);
     });
+    var qtyInput = document.getElementById('qty');
+    var qtyHidden = document.getElementById('qty-hidden');
+    var qtySticky = document.getElementById('qty-sticky');
+    if (qtyInput && qtyHidden) {
+        qtyInput.addEventListener('change', function() {
+            var v = Math.max(1, Math.min(99, parseInt(this.value, 10) || 1));
+            qtyHidden.value = v;
+            if (qtySticky) qtySticky.value = v;
+        });
+    }
 })();
 </script>
 @endpush
