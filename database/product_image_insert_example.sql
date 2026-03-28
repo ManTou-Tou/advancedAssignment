@@ -4,10 +4,6 @@
 -- image: Path relative to the `public` folder, e.g. Image/product/Iphone15.jpg
 -- stock: How many units are available to sell (decreases when customers complete checkout).
 
--- Single product
-INSERT INTO products (name, brand, category, price, rating, image, stock) VALUES
-('iPhone 15', 'Apple', 'phones', 799, 4.8, 'Image/product/Iphone15.jpg', 50);
-
 -- Multiple products (match your files in public/Image/product/ or public/image/product/)
 INSERT INTO products (name, brand, category, price, rating, image, stock) VALUES
 ('iPhone 15 Pro Max', 'Apple', 'phones', 1199, 4.9, 'Image/product/Iphone15promax.jpg', 40),
