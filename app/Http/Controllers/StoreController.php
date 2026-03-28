@@ -27,6 +27,32 @@ class StoreController extends Controller
         return session()->get('_cart_token');
     }
 
+    /**
+     * Total units sold per product (from completed order lines).
+     */
+    private function getSoldCountsByProductId(array $productIds): array
+    {
+        if ($productIds === []) {
+            return [];
+        }
+        $rows = DB::table('order_items')
+            ->whereIn('product_id', $productIds)
+            ->groupBy('product_id')
+            ->selectRaw('product_id, SUM(quantity) as sold')
+            ->get();
+
+        return $rows->pluck('sold', 'product_id')->map(fn ($v) => (int) $v)->all();
+    }
+
+    private function attachSoldAndStock(array $productRow, array $soldMap): array
+    {
+        $id = (int) $productRow['id'];
+        $productRow['sold'] = (int) ($soldMap[$id] ?? 0);
+        $productRow['stock'] = (int) ($productRow['stock'] ?? 0);
+
+        return $productRow;
+    }
+
     public function home(Request $request)
     {
         $query = DB::table('products')->orderBy('created_at', 'desc');
@@ -39,6 +65,9 @@ class StoreController extends Controller
         }
 
         $products = $query->get()->map(fn ($r) => $this->toArray($r));
+        $ids = $products->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $soldMap = $this->getSoldCountsByProductId($ids);
+        $products = $products->map(fn ($p) => $this->attachSoldAndStock($p, $soldMap));
 
         $featured_products = $products->take(8)->values()->all();
         $best_sellers = $products->sortByDesc('rating')->take(4)->values()->all();
@@ -57,6 +86,8 @@ class StoreController extends Controller
         }
 
         $product = $this->toArray($row);
+        $soldMap = $this->getSoldCountsByProductId([(int) $product['id']]);
+        $product = $this->attachSoldAndStock($product, $soldMap);
         $product['images'] = [
             $product['image'],
             $product['image'],
@@ -82,7 +113,8 @@ class StoreController extends Controller
                 'products.name',
                 'products.brand',
                 'products.price',
-                'products.image'
+                'products.image',
+                'products.stock'
             )
             ->get()
             ->map(fn ($r) => $this->toArray($r))
@@ -111,15 +143,27 @@ class StoreController extends Controller
         $productId = (int) $request->product_id;
         $quantity = (int) ($request->quantity ?? 1);
 
+        $product = DB::table('products')->where('id', $productId)->first();
+        $stock = (int) ($product->stock ?? 0);
+        if ($stock < 1) {
+            return $this->cartStockError($request, 'This product is out of stock.');
+        }
+
         $existing = DB::table('cart_items')
             ->where('session_id', $sessionId)
             ->where('product_id', $productId)
             ->first();
 
+        $currentInCart = $existing ? (int) $existing->quantity : 0;
+        $newTotal = $currentInCart + $quantity;
+        if ($newTotal > $stock) {
+            return $this->cartStockError($request, 'Not enough stock. Only ' . $stock . ' available.');
+        }
+
         if ($existing) {
             DB::table('cart_items')
                 ->where('id', $existing->id)
-                ->update(['quantity' => $existing->quantity + $quantity, 'updated_at' => now()]);
+                ->update(['quantity' => $newTotal, 'updated_at' => now()]);
         } else {
             DB::table('cart_items')->insert([
                 'session_id' => $sessionId,
@@ -130,10 +174,25 @@ class StoreController extends Controller
             ]);
         }
 
+        $cartCount = (int) DB::table('cart_items')->where('session_id', $sessionId)->sum('quantity');
+
         if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Added to cart']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Added to cart',
+                'cart_count' => $cartCount,
+            ]);
         }
-        return redirect()->route('store.cart')->with('message', 'Added to cart');
+
+        return back()->with('message', 'Added to cart');
+    }
+
+    private function cartStockError(Request $request, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+        return back()->with('error', $message);
     }
 
     public function removeFromCart(Request $request)
@@ -162,6 +221,22 @@ class StoreController extends Controller
         ]);
 
         $sessionId = $this->getCartSessionId();
+        $line = DB::table('cart_items')
+            ->join('products', 'cart_items.product_id', '=', 'products.id')
+            ->where('cart_items.id', $request->cart_item_id)
+            ->where('cart_items.session_id', $sessionId)
+            ->select('products.stock')
+            ->first();
+
+        if (!$line) {
+            return redirect()->route('store.cart')->with('message', 'Item not found');
+        }
+
+        $stock = (int) ($line->stock ?? 0);
+        if ((int) $request->quantity > $stock) {
+            return redirect()->route('store.cart')->with('error', 'Only ' . $stock . ' in stock for this product.');
+        }
+
         $updated = DB::table('cart_items')
             ->where('id', $request->cart_item_id)
             ->where('session_id', $sessionId)
@@ -221,6 +296,7 @@ class StoreController extends Controller
                 'cart_items.quantity as qty',
                 'products.name',
                 'products.price',
+                'products.stock',
             )
             ->get();
 
@@ -232,44 +308,59 @@ class StoreController extends Controller
         $shipping = $subtotal >= 99 ? 0 : 9.99;
         $total = $subtotal + $shipping;
 
-        DB::beginTransaction();
         try {
-            $orderId = DB::table('orders')->insertGetId([
-                'session_id' => $sessionId,
-                'subtotal' => $subtotal,
-                'shipping' => $shipping,
-                'total' => $total,
-                'status' => 'placed',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $orderId = DB::transaction(function () use ($items, $sessionId, $request, $subtotal, $shipping, $total) {
+                foreach ($items as $row) {
+                    $product = DB::table('products')
+                        ->where('id', $row->product_id)
+                        ->lockForUpdate()
+                        ->first();
+                    $available = (int) ($product->stock ?? 0);
+                    if (!$product || $available < (int) $row->qty) {
+                        throw new \RuntimeException('Insufficient stock for: ' . $row->name . ' (only ' . $available . ' left).');
+                    }
+                }
 
-            foreach ($items as $row) {
-                DB::table('order_items')->insert([
-                    'order_id' => $orderId,
-                    'product_id' => $row->product_id,
-                    'product_name' => $row->name,
-                    'price' => $row->price,
-                    'quantity' => $row->qty,
+                $orderId = DB::table('orders')->insertGetId([
+                    'session_id' => $sessionId,
+                    'subtotal' => $subtotal,
+                    'shipping' => $shipping,
+                    'total' => $total,
+                    'status' => 'placed',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-            }
 
-            DB::table('payments')->insert([
-                'order_id' => $orderId,
-                'payment_method' => $request->payment_method,
-                'amount' => $total,
-                'status' => 'successful',
-                'reference' => 'ORD-' . $orderId . '-' . now()->format('YmdHis'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                foreach ($items as $row) {
+                    DB::table('order_items')->insert([
+                        'order_id' => $orderId,
+                        'product_id' => $row->product_id,
+                        'product_name' => $row->name,
+                        'price' => $row->price,
+                        'quantity' => $row->qty,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    DB::table('products')
+                        ->where('id', $row->product_id)
+                        ->decrement('stock', (int) $row->qty);
+                }
 
-            DB::table('cart_items')->where('session_id', $sessionId)->delete();
-            DB::commit();
+                DB::table('payments')->insert([
+                    'order_id' => $orderId,
+                    'payment_method' => $request->payment_method,
+                    'amount' => $total,
+                    'status' => 'successful',
+                    'reference' => 'ORD-' . $orderId . '-' . now()->format('YmdHis'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('cart_items')->where('session_id', $sessionId)->delete();
+
+                return $orderId;
+            });
         } catch (\Throwable $e) {
-            DB::rollBack();
             return redirect()->route('store.checkout')->with('error', 'Order failed: ' . $e->getMessage());
         }
 

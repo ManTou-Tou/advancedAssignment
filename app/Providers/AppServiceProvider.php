@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('layouts.store', function ($view) {
+            $sessionId = session()->get('_cart_token') ?? session()->getId();
+            $cartItemCount = (int) DB::table('cart_items')->where('session_id', $sessionId)->sum('quantity');
+            $view->with('cartItemCount', $cartItemCount);
+        });
     }
 }

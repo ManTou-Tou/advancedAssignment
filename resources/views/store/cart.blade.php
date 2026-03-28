@@ -9,6 +9,9 @@
         @if(session('message'))
             <p style="color: var(--accent); margin-bottom: 16px;">{{ session('message') }}</p>
         @endif
+        @if(session('error'))
+            <p style="color: #c00; margin-bottom: 16px;">{{ session('error') }}</p>
+        @endif
         @forelse($cart as $item)
         <div class="cart-item">
             <img src="{{ str_starts_with($item['image'] ?? '', 'http') ? $item['image'] : asset($item['image']) }}" alt="{{ $item['name'] }}">

@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'TechStore') – {{ config('app.name') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +26,10 @@
                 <div class="dropdown" id="search-dropdown"></div>
             </div>
             <button type="button" class="icon-btn" aria-label="Wishlist">♡</button>
-            <a href="{{ url('/store/cart') }}" class="icon-btn" aria-label="Cart">&#128722;</a>
+            <a href="{{ url('/store/cart') }}" class="icon-btn cart-icon-link" id="cart-icon-link" aria-label="Cart">
+                &#128722;
+                <span class="cart-badge" id="cart-badge" @if(($cartItemCount ?? 0) < 1) style="display:none;" @endif>{{ ($cartItemCount ?? 0) > 99 ? '99+' : ($cartItemCount ?? 0) }}</span>
+            </a>
             <button type="button" class="icon-btn" aria-label="Profile">👤</button>
             <button type="button" class="menu-toggle" aria-label="Menu" id="menu-toggle">
                 <span></span><span></span><span></span>

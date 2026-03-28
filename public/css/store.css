@@ -44,6 +44,31 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--text-secondary);
 }
 .store-nav .nav-right .icon-btn:hover { background: var(--bg-light); color: var(--primary); }
+.store-nav .cart-icon-link { position: relative; }
+.cart-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.cart-badge.cart-badge--pulse { animation: cartBadgePulse 0.45s ease; }
+@keyframes cartBadgePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
 
 /* Hero */
 .hero { position: relative; width: 100%; min-height: 520px; background: var(--bg-light); overflow: hidden; }
@@ -93,6 +118,9 @@ img { max-width: 100%; height: auto; display: block; }
 .product-card .product-body { padding: 20px; }
 .product-card .brand-tag { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .product-card .product-name { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+.product-card .product-sold-line { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.product-card .product-stock-line { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.product-card .product-stock-line.out { color: #c00; font-weight: 600; }
 .product-card .product-rating { color: #f5a623; font-size: 14px; margin-bottom: 8px; }
 .product-card .product-price { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 20px; color: var(--accent); margin-bottom: 12px; }
 .product-card .product-actions { display: flex; gap: 8px; align-items: center; }

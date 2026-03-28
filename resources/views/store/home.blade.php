@@ -91,14 +91,24 @@
                 <div class="brand-tag">{{ $p['brand'] }}</div>
                 <a href="{{ url('/store/product/' . $p['id']) }}"><div class="product-name">{{ $p['name'] }}</div></a>
                 <div class="product-rating">★★★★☆ {{ $p['rating'] }}</div>
+                <div class="product-sold-line">{{ number_format($p['sold'] ?? 0) }} sold</div>
                 <div class="product-price">${{ number_format($p['price'], 0) }}</div>
+                @if(($p['stock'] ?? 0) < 1)
+                    <div class="product-stock-line out">Out of stock</div>
+                @else
+                    <div class="product-stock-line">{{ $p['stock'] }} in stock</div>
+                @endif
                 <div class="product-actions">
-                    <form action="{{ route('store.cart.add') }}" method="post" style="flex:1;display:flex;">
+                    @if(($p['stock'] ?? 0) < 1)
+                        <span class="btn-cart disabled" style="flex:1;text-align:center;line-height:44px;opacity:.5;cursor:not-allowed;">Out of stock</span>
+                    @else
+                    <form action="{{ route('store.cart.add') }}" method="post" class="js-add-to-cart-form" style="flex:1;display:flex;">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $p['id'] }}">
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="btn-cart">Add to Cart</button>
                     </form>
+                    @endif
                     <button type="button" class="wishlist-btn" aria-label="Wishlist">♡</button>
                 </div>
             </div>
@@ -145,14 +155,24 @@
                 <div class="brand-tag">{{ $p['brand'] }}</div>
                 <a href="{{ url('/store/product/' . $p['id']) }}"><div class="product-name">{{ $p['name'] }}</div></a>
                 <div class="product-rating">★★★★☆ {{ $p['rating'] }}</div>
+                <div class="product-sold-line">{{ number_format($p['sold'] ?? 0) }} sold</div>
                 <div class="product-price">${{ number_format($p['price'], 0) }}</div>
+                @if(($p['stock'] ?? 0) < 1)
+                    <div class="product-stock-line out">Out of stock</div>
+                @else
+                    <div class="product-stock-line">{{ $p['stock'] }} in stock</div>
+                @endif
                 <div class="product-actions">
-                    <form action="{{ route('store.cart.add') }}" method="post" style="flex:1;display:flex;">
+                    @if(($p['stock'] ?? 0) < 1)
+                        <span class="btn-cart disabled" style="flex:1;text-align:center;line-height:44px;opacity:.5;cursor:not-allowed;">Out of stock</span>
+                    @else
+                    <form action="{{ route('store.cart.add') }}" method="post" class="js-add-to-cart-form" style="flex:1;display:flex;">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $p['id'] }}">
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="btn-cart">Add to Cart</button>
                     </form>
+                    @endif
                     <button type="button" class="wishlist-btn" aria-label="Wishlist">♡</button>
                 </div>
             </div>
