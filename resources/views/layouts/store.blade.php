@@ -30,7 +30,21 @@
                 &#128722;
                 <span class="cart-badge" id="cart-badge" @if(($cartItemCount ?? 0) < 1) style="display:none;" @endif>{{ ($cartItemCount ?? 0) > 99 ? '99+' : ($cartItemCount ?? 0) }}</span>
             </a>
-            <button type="button" class="icon-btn" aria-label="Profile">👤</button>
+
+            @auth
+            <div class="user-info">
+                <span class="icon-btn">👤</span>
+                <span class="user-name">{{ Auth::user()->name }}</span>
+                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="logout-btn-simple">Logout</button>
+                </form>
+            </div>
+            @else
+                <a href="{{ route('login') }}" class="icon-btn">Login</a>
+                <a href="{{ route('register') }}" class="icon-btn">Register</a>
+            @endauth
+
             <button type="button" class="menu-toggle" aria-label="Menu" id="menu-toggle">
                 <span></span><span></span><span></span>
             </button>

@@ -244,3 +244,52 @@ img { max-width: 100%; height: auto; display: block; }
   .store-footer { padding: 48px 20px 24px; }
   .sticky-cart { padding: 16px 20px; flex-wrap: wrap; gap: 12px; }
 }
+
+/* User Info Styles */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 8px;
+    padding: 0 8px;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.logout-btn-simple {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.logout-btn-simple:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+}
+
+/* Auth pages */
+.auth-container {
+    background: var(--bg-light);
+}
+
+.auth-card {
+    background: var(--bg);
+}
+
+.auth-card input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.1);
+}
