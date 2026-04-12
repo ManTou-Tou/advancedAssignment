@@ -15,8 +15,6 @@ Route::get('/store/cart', [StoreController::class, 'cart'])->name('store.cart');
 Route::post('/store/cart/add', [StoreController::class, 'addToCart'])->name('store.cart.add');
 Route::post('/store/cart/remove', [StoreController::class, 'removeFromCart'])->name('store.cart.remove');
 Route::post('/store/cart/update', [StoreController::class, 'updateCartQuantity'])->name('store.cart.update');
-Route::get('/store/checkout', [StoreController::class, 'checkout'])->name('store.checkout');
-Route::post('/store/order/place', [StoreController::class, 'placeOrder'])->name('store.order.place');
 Route::get('/store/order/{id}/confirmation', [StoreController::class, 'orderConfirmation'])->name('store.order.confirmation');
 Route::get('/store/order/{id}/bill.pdf', [StoreController::class, 'billPdf'])->name('store.order.bill-pdf');
 
@@ -100,3 +98,10 @@ require __DIR__.'/auth.php';
 Route::get('/favorite', [StoreController::class, 'favorite'])->name('store.favorite');
 Route::post('/favorite/add', [StoreController::class, 'addToFavorite'])->name('store.favorite.add');
 Route::post('/favorite/remove', [StoreController::class, 'removeFromFavorite'])->name('store.favorite.remove');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/store/checkout', [StoreController::class, 'checkout'])->name('store.checkout');
+    Route::post('/store/order/place', [StoreController::class, 'placeOrder'])->name('store.order.place');
+    Route::get('/order/{id}/pay', [StoreController::class, 'payOrder'])->name('store.order.pay');
+});
+

@@ -1,2 +1,5 @@
 .cursor/
-.gitignore/
+node_modules/
+vendor/
+.env
+public/hot

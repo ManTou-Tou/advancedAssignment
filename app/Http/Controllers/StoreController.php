@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StoreController extends Controller
 {
@@ -353,7 +354,7 @@ class StoreController extends Controller
                     'subtotal' => $subtotal,
                     'shipping' => $shipping,
                     'total' => $total,
-                    'status' => 'placed',
+                    'status' => 'pending',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -372,7 +373,7 @@ class StoreController extends Controller
                         ->where('id', $row->product_id)
                         ->decrement('stock', (int) $row->qty);
                 }
-
+            Log::info('Inserting payment', ['order_id' => $orderId]);
                 DB::table('payments')->insert([
                     'order_id' => $orderId,
                     'payment_method' => $request->payment_method,
@@ -382,7 +383,7 @@ class StoreController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
+            
                 DB::table('cart_items')->where('session_id', $sessionId)->delete();
 
                 return $orderId;
@@ -502,4 +503,42 @@ class StoreController extends Controller
 
         return back()->with('message', 'Added to favorite');
     }
+
+    public function payOrder($id)
+{
+    $sessionId = $this->getCartSessionId();
+
+    $order = DB::table('orders')
+        ->where('id', $id)
+        ->where('session_id', $sessionId)
+        ->first();
+
+    if (!$order) {
+        abort(404);
+    }
+
+    DB::table('orders')
+        ->where('id', $id)
+        ->update(['status' => 'processing']);
+
+    $success = rand(0, 1);
+
+    DB::table('orders')
+        ->where('id', $id)
+        ->update([
+            'status' => $success ? 'paid' : 'failed'
+        ]);
+
+    DB::table('payments')->insert([
+        'order_id' => $id,
+        'payment_method' => 'simulated',
+        'amount' => $order->total,
+        'status' => $success ? 'successful' : 'failed',
+        'reference' => 'SIM-' . $id . '-' . now()->format('YmdHis'),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return redirect()->route('store.order.confirmation', ['id' => $id]);
+}
 }
