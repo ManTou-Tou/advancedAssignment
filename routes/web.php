@@ -97,3 +97,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });   
 
 require __DIR__.'/auth.php';
+Route::get('/favorite', [StoreController::class, 'favorite'])->name('store.favorite');
+Route::post('/favorite/add', [StoreController::class, 'addToFavorite'])->name('store.favorite.add');
+Route::post('/favorite/remove', [StoreController::class, 'removeFromFavorite'])->name('store.favorite.remove');

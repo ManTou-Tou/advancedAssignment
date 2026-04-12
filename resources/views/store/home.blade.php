@@ -60,25 +60,40 @@
         <h2>Featured Products</h2>
         <p>Handpicked smartphones and laptops</p>
     </div>
-    <div class="toolbar">
-        <div class="search-autocomplete">
-            <input type="text" placeholder="Search..." id="filter-search" style="width:200px;">
-        </div>
-        <div style="display:flex;gap:12px;">
-            <select id="filter-brand">
-                <option value="">All Brands</option>
-                <option value="apple">Apple</option>
-                <option value="lenovo">Lenovo</option>
-                <option value="honor">Honor</option>
-            </select>
-            <select id="filter-sort">
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="bestselling">Best Selling</option>
-            </select>
-        </div>
-    </div>
+    <form action="{{ url('/') }}" method="get" class="toolbar" style="display:flex; gap:12px; flex-wrap:wrap;">
+    
+        <input 
+            type="text" 
+            name="search" 
+            placeholder="Search..." 
+            value="{{ request('search') }}"
+            style="width:200px;"
+        >
+
+        <select name="brand">
+            <option value="">All Brands</option>
+            <option value="Apple" {{ request('brand') == 'Apple' ? 'selected' : '' }}>Apple</option>
+            <option value="Lenovo" {{ request('brand') == 'Lenovo' ? 'selected' : '' }}>Lenovo</option>
+            <option value="Honor" {{ request('brand') == 'Honor' ? 'selected' : '' }}>Honor</option>
+        </select>
+
+        <select name="cat">
+            <option value="">All Categories</option>
+            <option value="phones" {{ request('cat') == 'phones' ? 'selected' : '' }}>Phones</option>
+            <option value="laptops" {{ request('cat') == 'laptops' ? 'selected' : '' }}>Laptops</option>
+        </select>
+
+        <select name="sort">
+            <option value="">Newest</option>
+            <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
+            <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+            <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>Top Rating</option>
+        </select>
+
+        <button type="submit">Search</button>
+
+        <a href="{{ url('/') }}" style="padding:8px 12px;">Reset</a>
+    </form>
     <div class="product-grid" id="featured-products">
         @foreach($featured_products as $p)
         <article class="product-card">
@@ -109,7 +124,11 @@
                         <button type="submit" class="btn-cart">Add to Cart</button>
                     </form>
                     @endif
-                    <button type="button" class="wishlist-btn" aria-label="Wishlist">♡</button>
+                    <form action="{{ route('store.favorite.add') }}" method="post" style="display:inline;">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $p['id'] }}">
+                        <button type="submit" class="wishlist-btn" style="border:none;background:none;cursor:pointer;">♡</button>
+                    </form>
                 </div>
             </div>
         </article>
