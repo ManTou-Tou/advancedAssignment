@@ -55,13 +55,37 @@ class StoreController extends Controller
 
     public function home(Request $request)
     {
-        $query = DB::table('products')->orderBy('created_at', 'desc');
+        $query = DB::table('products');
 
+        // search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                ->orWhere('brand', 'like', '%' . $search . '%')
+                ->orWhere('category', 'like', '%' . $search . '%');
+            });
+        }
+
+        // filter by brand
         if ($request->filled('brand')) {
             $query->where('brand', $request->brand);
         }
+
+        // filter by category
         if ($request->filled('cat') && in_array($request->cat, ['phones', 'laptops'])) {
             $query->where('category', $request->cat);
+        }
+
+        // sort
+        if ($request->sort === 'price_low') {
+            $query->orderBy('price', 'asc');
+        } elseif ($request->sort === 'price_high') {
+            $query->orderBy('price', 'desc');
+        } elseif ($request->sort === 'rating') {
+            $query->orderBy('rating', 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
         $products = $query->get()->map(fn ($r) => $this->toArray($r));
@@ -69,12 +93,15 @@ class StoreController extends Controller
         $soldMap = $this->getSoldCountsByProductId($ids);
         $products = $products->map(fn ($p) => $this->attachSoldAndStock($p, $soldMap));
 
-        $featured_products = $products->take(8)->values()->all();
+        $featured_products = $products->values()->all();
         $best_sellers = $products->sortByDesc('rating')->take(4)->values()->all();
+
+        $brands = DB::table('products')->select('brand')->distinct()->pluck('brand')->all();
 
         return view('store.home', [
             'featured_products' => $featured_products,
             'best_sellers' => $best_sellers,
+            'brands' => $brands,
         ]);
     }
 
@@ -408,5 +435,71 @@ class StoreController extends Controller
             'public_bank' => 'Online Banking - Public Bank',
             default => $method,
         };
+    }
+
+    public function favorite()
+    {
+        $sessionId = $this->getCartSessionId();
+
+        $favorites = DB::table('favorites')
+            ->join('products', 'favorites.product_id', '=', 'products.id')
+            ->where('favorites.session_id', $sessionId)
+            ->select(
+                'favorites.id as favorite_id',
+                'favorites.product_id',
+                'products.name',
+                'products.brand',
+                'products.price',
+                'products.image'
+            )
+            ->get()
+            ->map(fn ($r) => $this->toArray($r))
+            ->all();
+
+        return view('store.favorite', [
+            'favorites' => $favorites,
+        ]);
+    }
+
+    public function removeFromFavorite(Request $request)
+    {
+        $request->validate([
+            'favorite_id' => 'required|integer',
+        ]);
+
+        $sessionId = $this->getCartSessionId();
+
+        $deleted = DB::table('favorites')
+            ->where('id', $request->favorite_id)
+            ->where('session_id', $sessionId)
+            ->delete();
+
+        return redirect()->route('store.favorite')->with('message', $deleted ? 'Item removed from favorite' : 'Item not found');
+    }
+
+    public function addToFavorite(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
+
+        $sessionId = $this->getCartSessionId();
+        $productId = (int) $request->product_id;
+
+        $exists = DB::table('favorites')
+            ->where('session_id', $sessionId)
+            ->where('product_id', $productId)
+            ->first();
+
+        if (!$exists) {
+            DB::table('favorites')->insert([
+                'session_id' => $sessionId,
+                'product_id' => $productId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return back()->with('message', 'Added to favorite');
     }
 }

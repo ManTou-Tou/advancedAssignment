@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\Admin\LoginController;
+use App\Http\Controllers\Admin\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
@@ -77,3 +79,24 @@ Route::get('/no-db-test', function () {
     return response()->json(['ok' => true]);
 });
 
+// Admin routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+        Route::post('login', [LoginController::class, 'login']);
+        Route::get('register', [RegisterController::class, 'showRegisterForm'])->name('register');
+        Route::post('register', [RegisterController::class, 'register']);
+    });
+    
+    Route::middleware('auth:admin')->group(function () {
+        Route::get('dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+        Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+    });
+});   
+
+require __DIR__.'/auth.php';
+Route::get('/favorite', [StoreController::class, 'favorite'])->name('store.favorite');
+Route::post('/favorite/add', [StoreController::class, 'addToFavorite'])->name('store.favorite.add');
+Route::post('/favorite/remove', [StoreController::class, 'removeFromFavorite'])->name('store.favorite.remove');

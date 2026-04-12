@@ -21,16 +21,47 @@
             <a href="{{ url('/store?deals=1') }}">Deals</a>
         </div>
         <div class="nav-right">
-            <div class="search-autocomplete">
-                <input type="text" id="search-input" placeholder="Search products..." autocomplete="off">
-                <div class="dropdown" id="search-dropdown"></div>
-            </div>
-            <button type="button" class="icon-btn" aria-label="Wishlist">♡</button>
+            <form action="{{ url('/') }}" method="get" class="search-autocomplete" id="search-form" style="position:relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    name="search" 
+                    placeholder="Search products..." 
+                    value="{{ request('search') }}"
+                    autocomplete="off"
+                    style="padding-right:40px;"
+                >
+
+                <button 
+                    type="submit" 
+                    style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:none; cursor:pointer;"
+                    aria-label="Search"
+                >
+                    🔍
+                </button>
+
+                <div class="dropdown" id="search-dropdown" style="display:none;"></div>
+            </form>
+            <a href="{{ route('store.favorite') }}" class="icon-btn" aria-label="Wishlist" style="text-decoration:none;">♡</a>
             <a href="{{ url('/store/cart') }}" class="icon-btn cart-icon-link" id="cart-icon-link" aria-label="Cart">
                 &#128722;
                 <span class="cart-badge" id="cart-badge" @if(($cartItemCount ?? 0) < 1) style="display:none;" @endif>{{ ($cartItemCount ?? 0) > 99 ? '99+' : ($cartItemCount ?? 0) }}</span>
             </a>
-            <button type="button" class="icon-btn" aria-label="Profile">👤</button>
+
+            @auth
+            <div class="user-info">
+                <span class="icon-btn">👤</span>
+                <span class="user-name">{{ Auth::user()->name }}</span>
+                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="logout-btn-simple">Logout</button>
+                </form>
+            </div>
+            @else
+                <a href="{{ route('login') }}" class="icon-btn">Login</a>
+                <a href="{{ route('register') }}" class="icon-btn">Register</a>
+            @endauth
+
             <button type="button" class="menu-toggle" aria-label="Menu" id="menu-toggle">
                 <span></span><span></span><span></span>
             </button>
