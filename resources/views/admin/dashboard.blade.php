@@ -197,10 +197,14 @@
                 <p class="welcome-text">Welcome back, {{ Auth::guard('admin')->user()->name }}!</p>
                 <p class="muted">Sales are calculated from orders with payment status: <b>successful</b>.</p>
             </div>
-            <form method="POST" action="{{ route('admin.logout') }}">
-                @csrf
-                <button type="submit" class="logout-btn">Logout</button>
-            </form>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <a href="{{ route('admin.products.index') }}" style="display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid #e5e7eb; text-decoration:none; font-weight:800; font-size:13px; color:#111827; background:#fff;">Manage Products</a>
+                <a href="{{ route('admin.orders') }}" style="display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid #e5e7eb; text-decoration:none; font-weight:800; font-size:13px; color:#111827; background:#fff;">Manage Orders</a>
+                <form method="POST" action="{{ route('admin.logout') }}">
+                    @csrf
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            </div>
         </div>
 
         @php

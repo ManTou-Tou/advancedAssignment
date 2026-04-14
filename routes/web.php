@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\LoginController;
 use App\Http\Controllers\Admin\RegisterController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrdersController;
+use App\Http\Controllers\Admin\ProductsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
@@ -113,6 +114,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('orders', [OrdersController::class, 'index'])->name('orders');
         Route::post('orders/{orderId}/delivery', [OrdersController::class, 'updateDelivery'])->name('orders.delivery');
+        Route::resource('products', ProductsController::class)->except(['show'])->names('products');
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
     });
 });   
