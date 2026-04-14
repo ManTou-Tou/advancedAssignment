@@ -50,7 +50,9 @@
         </form>
 
         <p style="text-align: center; margin-top: 24px; color: var(--text-secondary);">
-            <a href="{{ route('admin.register') }}" style="color: var(--accent);">Register new admin</a>
+            @if (\Illuminate\Support\Facades\Route::has('admin.register'))
+                <a href="{{ route('admin.register') }}" style="color: var(--accent);">Register new admin</a>
+            @endif
         </p>
     </div>
 </div>

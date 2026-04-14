@@ -31,19 +31,30 @@
                 <span class="cart-badge" id="cart-badge" @if(($cartItemCount ?? 0) < 1) style="display:none;" @endif>{{ ($cartItemCount ?? 0) > 99 ? '99+' : ($cartItemCount ?? 0) }}</span>
             </a>
 
-            @auth
-            <div class="user-info">
-                <span class="icon-btn">👤</span>
-                <span class="user-name">{{ Auth::user()->name }}</span>
-                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                    @csrf
-                    <button type="submit" class="logout-btn-simple">Logout</button>
-                </form>
-            </div>
+            @if(Auth::guard('admin')->check())
+                <div class="user-info">
+                    <span class="icon-btn">👤</span>
+                    <span class="user-name">{{ Auth::guard('admin')->user()->name }} (Admin)</span>
+                    <a href="{{ route('admin.dashboard') }}" class="logout-btn-simple" style="text-decoration:none;">Dashboard</a>
+                    <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="logout-btn-simple">Logout</button>
+                    </form>
+                </div>
+            @elseif(Auth::guard('web')->check())
+                <div class="user-info">
+                    <span class="icon-btn">👤</span>
+                    <span class="user-name">{{ Auth::guard('web')->user()->name }}</span>
+                    <a href="{{ route('store.my-orders') }}" class="logout-btn-simple" style="text-decoration:none;">My Orders</a>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="logout-btn-simple">Logout</button>
+                    </form>
+                </div>
             @else
-                <a href="{{ route('login') }}" class="icon-btn">Login</a>
-                <a href="{{ route('register') }}" class="icon-btn">Register</a>
-            @endauth
+                    <a href="{{ route('login') }}" class="icon-btn">Login</a>
+                    <a href="{{ route('register') }}" class="icon-btn">Register</a>
+            @endif
 
             <button type="button" class="menu-toggle" aria-label="Menu" id="menu-toggle">
                 <span></span><span></span><span></span>

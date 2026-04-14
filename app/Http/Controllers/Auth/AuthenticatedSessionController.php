@@ -24,11 +24,25 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        // Try normal user login first (default web guard).
+        try {
+            $request->authenticate();
+            $request->session()->regenerate();
 
-        $request->session()->regenerate();
+            return redirect()->intended('/store');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // If user auth fails, try admin guard using same credentials.
+            $credentials = $request->only('email', 'password');
+            $remember = $request->boolean('remember');
 
-        return redirect()->intended('/store');
+            if (Auth::guard('admin')->attempt($credentials, $remember)) {
+                $request->session()->regenerate();
+
+                return redirect()->intended('/admin/dashboard');
+            }
+
+            throw $e;
+        }
     }
 
     /**

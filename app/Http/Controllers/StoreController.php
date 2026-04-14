@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StoreController extends Controller
@@ -285,6 +286,14 @@ class StoreController extends Controller
     {
         $request->validate([
             'payment_method' => 'required|in:tng,maybank,public_bank',
+            'delivery_name' => 'required|string|max:255',
+            'delivery_phone' => 'required|string|max:40',
+            'delivery_address_line1' => 'required|string|max:255',
+            'delivery_address_line2' => 'nullable|string|max:255',
+            'delivery_city' => 'required|string|max:100',
+            'delivery_state' => 'required|string|max:100',
+            'delivery_postcode' => 'required|string|max:20',
+            'delivery_country' => 'required|string|max:100',
         ]);
 
         $sessionId = $this->getCartSessionId();
@@ -323,10 +332,20 @@ class StoreController extends Controller
 
                 $orderId = DB::table('orders')->insertGetId([
                     'session_id' => $sessionId,
+                    'user_id' => Auth::guard('web')->id(),
                     'subtotal' => $subtotal,
                     'shipping' => $shipping,
                     'total' => $total,
                     'status' => 'placed',
+                    'delivery_name' => $request->delivery_name,
+                    'delivery_phone' => $request->delivery_phone,
+                    'delivery_address_line1' => $request->delivery_address_line1,
+                    'delivery_address_line2' => $request->delivery_address_line2,
+                    'delivery_city' => $request->delivery_city,
+                    'delivery_state' => $request->delivery_state,
+                    'delivery_postcode' => $request->delivery_postcode,
+                    'delivery_country' => $request->delivery_country,
+                    'delivery_status' => 'pending',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -370,7 +389,16 @@ class StoreController extends Controller
     public function orderConfirmation(int $id)
     {
         $sessionId = $this->getCartSessionId();
-        $order = DB::table('orders')->where('id', $id)->where('session_id', $sessionId)->first();
+        $userId = Auth::guard('web')->id();
+
+        $orderQuery = DB::table('orders')->where('id', $id);
+        if ($userId) {
+            $orderQuery->where('user_id', $userId);
+        } else {
+            $orderQuery->where('session_id', $sessionId);
+        }
+
+        $order = $orderQuery->first();
         if (!$order) {
             abort(404);
         }
@@ -386,7 +414,16 @@ class StoreController extends Controller
     public function billPdf(int $id)
     {
         $sessionId = $this->getCartSessionId();
-        $order = DB::table('orders')->where('id', $id)->where('session_id', $sessionId)->first();
+        $userId = Auth::guard('web')->id();
+
+        $orderQuery = DB::table('orders')->where('id', $id);
+        if ($userId) {
+            $orderQuery->where('user_id', $userId);
+        } else {
+            $orderQuery->where('session_id', $sessionId);
+        }
+
+        $order = $orderQuery->first();
         if (!$order) {
             abort(404);
         }
@@ -398,6 +435,46 @@ class StoreController extends Controller
 
         $pdf = Pdf::loadView('store.bill-pdf', ['order' => $order]);
         return $pdf->download('bill-order-' . $id . '.pdf');
+    }
+
+    public function myOrders()
+    {
+        $userId = Auth::guard('web')->id();
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        $orders = DB::table('orders')
+            ->where('user_id', $userId)
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get()
+            ->map(fn ($r) => $this->toArray($r))
+            ->all();
+
+        return view('store.my-orders', ['orders' => $orders]);
+    }
+
+    public function myOrderDetails(int $id)
+    {
+        $userId = Auth::guard('web')->id();
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        $order = DB::table('orders')->where('id', $id)->where('user_id', $userId)->first();
+        if (!$order) {
+            abort(404);
+        }
+
+        $order = $this->toArray($order);
+        $order['items'] = DB::table('order_items')
+            ->where('order_id', $id)
+            ->get()
+            ->map(fn ($r) => $this->toArray($r))
+            ->all();
+
+        return view('store.my-order-details', ['order' => $order]);
     }
 
     private function paymentMethodLabel(string $method): string

@@ -3,22 +3,32 @@
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\Admin\LoginController;
 use App\Http\Controllers\Admin\RegisterController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\OrdersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 
-// E-commerce store (main site)
-Route::get('/', [StoreController::class, 'home']);
-Route::get('/store', [StoreController::class, 'home']);
-Route::get('/store/product/{id}', [StoreController::class, 'product']);
-Route::get('/store/cart', [StoreController::class, 'cart'])->name('store.cart');
-Route::post('/store/cart/add', [StoreController::class, 'addToCart'])->name('store.cart.add');
-Route::post('/store/cart/remove', [StoreController::class, 'removeFromCart'])->name('store.cart.remove');
-Route::post('/store/cart/update', [StoreController::class, 'updateCartQuantity'])->name('store.cart.update');
-Route::get('/store/checkout', [StoreController::class, 'checkout'])->name('store.checkout');
-Route::post('/store/order/place', [StoreController::class, 'placeOrder'])->name('store.order.place');
-Route::get('/store/order/{id}/confirmation', [StoreController::class, 'orderConfirmation'])->name('store.order.confirmation');
-Route::get('/store/order/{id}/bill.pdf', [StoreController::class, 'billPdf'])->name('store.order.bill-pdf');
+// E-commerce store (main site) - requires login (user OR admin).
+Route::middleware('auth.any')->group(function () {
+    Route::get('/', [StoreController::class, 'home']);
+    Route::get('/store', [StoreController::class, 'home']);
+    Route::get('/store/product/{id}', [StoreController::class, 'product']);
+    Route::get('/store/cart', [StoreController::class, 'cart'])->name('store.cart');
+    Route::post('/store/cart/add', [StoreController::class, 'addToCart'])->name('store.cart.add');
+    Route::post('/store/cart/remove', [StoreController::class, 'removeFromCart'])->name('store.cart.remove');
+    Route::post('/store/cart/update', [StoreController::class, 'updateCartQuantity'])->name('store.cart.update');
+    Route::get('/store/checkout', [StoreController::class, 'checkout'])->name('store.checkout');
+    Route::post('/store/order/place', [StoreController::class, 'placeOrder'])->name('store.order.place');
+    Route::get('/store/order/{id}/confirmation', [StoreController::class, 'orderConfirmation'])->name('store.order.confirmation');
+    Route::get('/store/order/{id}/bill.pdf', [StoreController::class, 'billPdf'])->name('store.order.bill-pdf');
+
+    // User order tracking
+    Route::middleware('auth')->group(function () {
+        Route::get('/store/my-orders', [StoreController::class, 'myOrders'])->name('store.my-orders');
+        Route::get('/store/my-orders/{id}', [StoreController::class, 'myOrderDetails'])->name('store.my-orders.details');
+    });
+});
 
 // Legacy: users table view & db-test
 Route::get('/users', function () {
@@ -84,14 +94,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest:admin')->group(function () {
         Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
         Route::post('login', [LoginController::class, 'login']);
-        Route::get('register', [RegisterController::class, 'showRegisterForm'])->name('register');
-        Route::post('register', [RegisterController::class, 'register']);
+
+        // Admin self-registration is a security risk; keep it for local/dev only.
+        if (app()->environment('local')) {
+            Route::get('register', [RegisterController::class, 'showRegisterForm'])->name('register');
+            Route::post('register', [RegisterController::class, 'register']);
+        }
     });
     
     Route::middleware('auth:admin')->group(function () {
-        Route::get('dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('orders', [OrdersController::class, 'index'])->name('orders');
+        Route::post('orders/{orderId}/delivery', [OrdersController::class, 'updateDelivery'])->name('orders.delivery');
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
     });
 });   
