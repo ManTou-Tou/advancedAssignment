@@ -57,7 +57,15 @@
             <input type="hidden" name="quantity" id="qty-hidden" value="1">
             <button type="submit" class="btn-add-cart">Add to Cart</button>
         </form>
-        <a href="{{ url('/store/cart') }}" class="btn-buy-now" style="display:inline-block;text-align:center;box-sizing:border-box;">Buy Now</a>
+
+        <form action="{{ route('store.favorite.add') }}" method="post">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+            <button type="submit" class="btn-buy-now" style="width:100%;border:none;cursor:pointer;">
+                Add to Favorite
+            </button>
+        </form>
+            <a href="{{ url('/store/cart') }}" class="btn-buy-now" style="display:inline-block;text-align:center;box-sizing:border-box;">Buy Now</a>
         @endif
 
         <div class="product-tabs">
@@ -92,6 +100,14 @@
         <input type="hidden" name="product_id" value="{{ $product['id'] }}">
         <input type="hidden" name="quantity" id="qty-sticky" value="1">
         <button type="submit" class="btn-add-cart" style="max-width: 200px;">Add to Cart</button>
+    </form>
+
+    <form action="{{ route('store.favorite.add') }}" method="post" style="display:flex; margin-left:10px;">
+        @csrf
+        <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+        <button type="submit" class="btn-buy-now" style="max-width: 200px; border:none; cursor:pointer;">
+            Favorite
+        </button>
     </form>
     @endif
 </div>

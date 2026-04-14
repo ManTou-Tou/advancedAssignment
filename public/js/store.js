@@ -43,18 +43,63 @@
     }
 
     // Search autocomplete (demo: show suggestions on focus)
+   // Search autocomplete
     var searchInput = document.getElementById('search-input');
     var searchDropdown = document.getElementById('search-dropdown');
-    if (searchInput && searchDropdown) {
-        var suggestions = ['iPhone 15 Pro', 'ThinkPad X1', 'Honor Magic 6', 'MacBook Pro', 'Lenovo IdeaPad'];
-        searchInput.addEventListener('focus', function() {
-            searchDropdown.innerHTML = suggestions.map(function(s) {
-                return '<a href="/store?q=' + encodeURIComponent(s) + '" style="display:block;padding:12px 20px;color:#222;">' + s + '</a>';
+    var searchForm = document.getElementById('search-form');
+
+    if (searchInput && searchDropdown && searchForm) {
+        var suggestions = [
+            'iPhone 15 Pro Max',
+            'iPhone 15',
+            'MacBook Pro 14',
+            'iPad Pro 12.9',
+            'ThinkPad X1 Carbon',
+            'IdeaPad Slim 5',
+            'Honor Magic 6 Pro',
+            'Honor 90'
+        ];
+
+        function showSuggestions(keyword) {
+            var value = keyword.toLowerCase().trim();
+
+            var filtered = suggestions.filter(function(item) {
+                return item.toLowerCase().includes(value);
+            });
+
+            if (filtered.length === 0) {
+                searchDropdown.innerHTML = '';
+                searchDropdown.style.display = 'none';
+                return;
+            }
+
+            searchDropdown.innerHTML = filtered.map(function(item) {
+                return '<div class="search-item" style="padding:12px 16px; cursor:pointer;">' + item + '</div>';
             }).join('');
-            searchDropdown.parentElement.classList.add('open');
+
+            searchDropdown.style.display = 'block';
+
+            searchDropdown.querySelectorAll('.search-item').forEach(function(itemEl) {
+                itemEl.addEventListener('click', function() {
+                    searchInput.value = this.textContent;
+                    searchDropdown.style.display = 'none';
+                    searchForm.submit();
+                });
+            });
+        }
+
+        searchInput.addEventListener('focus', function() {
+            showSuggestions(searchInput.value);
         });
-        searchInput.addEventListener('blur', function() {
-            setTimeout(function() { searchDropdown.parentElement.classList.remove('open'); }, 200);
+
+        searchInput.addEventListener('input', function() {
+            showSuggestions(this.value);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchForm.contains(e.target)) {
+                searchDropdown.style.display = 'none';
+            }
         });
     }
 
