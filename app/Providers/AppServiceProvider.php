@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -30,6 +33,22 @@ class AppServiceProvider extends ServiceProvider
             $sessionId = session()->get('_cart_token') ?? session()->getId();
             $cartItemCount = (int) DB::table('cart_items')->where('session_id', $sessionId)->sum('quantity');
             $view->with('cartItemCount', $cartItemCount);
+        });
+        
+        Gate::define('manage-products', function () {
+            return Auth::guard('admin')->check();
+        });
+        
+        Gate::define('manage-orders', function () {
+            return Auth::guard('admin')->check();
+        });
+        
+        Gate::define('place-order', function () {
+            return Auth::guard('web')->check();
+        });
+        
+        Gate::define('view-own-orders', function ($user, $order) {
+            return Auth::guard('web')->check() && Auth::id() === $order->user_id;
         });
     }
 }
