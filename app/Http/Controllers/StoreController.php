@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Gate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -279,6 +280,10 @@ class StoreController extends Controller
 
     public function checkout(Request $request)
     {
+        if (!Gate::allows('place-order')) {
+            return redirect()->route('login')->with('error', 'Please login to checkout.');
+        }
+
         $sessionId = $this->getCartSessionId();
         $items = DB::table('cart_items')
             ->join('products', 'cart_items.product_id', '=', 'products.id')
@@ -493,6 +498,10 @@ class StoreController extends Controller
         $order = DB::table('orders')->where('id', $id)->where('user_id', $userId)->first();
         if (!$order) {
             abort(404);
+        }
+
+        if (!Gate::allows('view-own-orders', $order)) {
+            abort(403, 'You are not authorized to view this order.');
         }
 
         $order = $this->toArray($order);
