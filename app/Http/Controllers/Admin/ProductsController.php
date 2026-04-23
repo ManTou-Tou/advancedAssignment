@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +13,10 @@ class ProductsController extends Controller
 {
     public function index(): View
     {
+        if (!Gate::allows('manage-products')) {
+            abort(403, 'You are not authorized to view this page.');
+        }
+
         $products = Product::query()
             ->orderByDesc('id')
             ->paginate(15);
@@ -47,6 +52,10 @@ class ProductsController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        if (!Gate::allows('manage-products')) {
+            abort(403);
+        }
+        
         $product->delete();
 
         return redirect()->route('admin.products.index')->with('success', 'Product deleted.');
