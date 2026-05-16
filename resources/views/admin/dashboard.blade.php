@@ -231,7 +231,7 @@
                 <div class="kpi-value" style="font-size:16px; line-height:1.2;">{{ $topName }}</div>
             </div>
         </div>
-
+ <!--coment --> 
         <div class="grid">
             <div class="panel">
                 <h2>Top selling products (by units sold)</h2>
